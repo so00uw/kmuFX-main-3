@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Window 6 - 증언 수집 게임</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DungGeunMo&display=swap');
+
+body {
+  font-family: 'DungGeunMo', monospace;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  transition: none !important; /* ✅ 배경 전환 효과 제거 */
+}
+
+/* ── 시작 화면 ─────────────────────────── */
+#start-screen {
+  position: absolute;
+  inset: 0;
+  background: url("../img/window6/11.png") center/cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* ✅ 스타트 버튼 중앙 위치 고정 */
+#start-btn {
+  position: absolute;
+  top: 60%; /* 중앙 아래쪽으로 조정 가능 */
+  left: 36%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 100px;
+  background: url("../img/window6/77.png") center/contain no-repeat;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.25s;
+}
+#start-btn:hover { transform: translate(-50%, -50%) scale(1.06); }
+#start-btn:active { transform: translate(-50%, -50%) scale(0.97); }
+
+/* ── 게임 UI ─────────────────────────── */
+.game-ui {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+/* 캐릭터 패널 */
+.character-panel {
+  position: absolute;
+  bottom: 180px;
+  width: 30%;
+  max-height: 450px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  z-index: 5;
+}
+.character-panel.left { left: 5%; }
+.character-panel.right { right: 5%; }
+
+.character-art {
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+#detective-art { background-image: url("../img/window6/33.png"); }
+#witness-art { transform: scaleX(-1); }
+
+/* ✅ 네임텍 제거 */
+.info-box { display: none; }
+
+.speech-bubble {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 15px;
+  padding: 15px;
+  color: #000;
+  font-size: 18px;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 15px 15px 0;
+  border-style: solid;
+  border-color: #000 transparent transparent transparent;
+}
+
+/* 수첩(기록) */
+.notebook-panel {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 400px;
+  background-image: url("../img/window6/99.png");
+  background-size: 100% 100%;
+  border: none;
+  color: #333;
+  padding: 40px 60px;
+  box-sizing: border-box;
+  
+  z-index: 1;
+}
+#recorded-testimonies { height: 100%; overflow-y: auto; text-align: left; }
+.testimony-entry { border-bottom: 1px solid #c8bfa8; padding-bottom: 5px; margin-bottom: 5px; }
+.testimony-entry .info { font-size: 14px; font-weight: bold; color: #5a3a2a; }
+.testimony-entry .content { font-size: 16px; }
+
+.bottom-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  background: rgba(26,83,117,0.9);
+  border-top: 4px solid #82c8ff;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 2;
+}
+.sentence-slots { display: flex; gap: 15px; }
+.slot {
+  width: 130px;
+  height: 50px;
+  border: 2px solid #a0d0ff;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.word-fragments { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.word-fragment {
+  display: inline-block;
+  background: #5a3a2a;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: grab;
+  font-size: 18px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+}
+.word-fragment:active { cursor: grabbing; transform: scale(1.08); }
+
+.button-container {
+  position: absolute;
+  bottom: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  z-index: 999;
+}
+.ui-button {
+  font-family: 'DungGeunMo', monospace;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 20px;
+  padding: 10px 20px;
+  background: #e8e0d0;
+  color: #2c2a3e;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+.next-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+}
+
+/* ✅ 팝업 중앙 정렬 */
+.popup-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.popup-content {
+  background: #fff;
+  border: 3px solid #000;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  font-family: 'DungGeunMo', monospace;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.popup-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+
+<body>
+<!-- ── 시작 화면 ─────────────────────────-->
+<div id="start-screen">
+  <button id="start-btn" aria-label="Start"></button>
+</div>
+
+<!-- ── 게임 UI ─────────────────────────-->
+<div class="game-ui">
+  <div class="character-panel left">
+    <div class="character-art" id="detective-art"></div>
+  </div>
+
+  <div class="character-panel right">
+    <div class="character-art" id="witness-art"></div>
+    <div class="info-box" id="witness-info-box"></div>
+  </div>
+
+  <div class="speech-bubble" id="speech-bubble"></div>
+
+  <div class="notebook-panel">
+    <div id="recorded-testimonies"></div>
+  </div>
+
+  <div class="bottom-panel">
+    <div id="sentence-slots" class="sentence-slots"></div>
+    <div id="word-fragments" class="word-fragments"></div>
+  </div>
+
+  <div class="button-container">
+    <button id="check-button" class="ui-button">검증하기</button>
+    <button id="hint-button" class="ui-button">힌트</button>
+  </div>
+  <button id="next-witness-button" class="ui-button next-button hidden">다음 증인</button>
+
+  <div id="confirmation-popup" class="popup-container hidden">
+    <div class="popup-content">
+      <h3>증언 신뢰도 분석</h3>
+      <div class="analysis">
+        신뢰도: <span id="credibility-score">0</span>%<br/>
+        유용성: <span id="usefulness-score">0</span>%
+      </div>
+      <div class="popup-buttons">
+        <button id="confirm-yes">기록하기</button>
+        <button id="confirm-no">패스</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-end-popup" class="popup-container hidden">
+    <div class="popup-content">
+      <h3 id="game-end-message"></h3>
+      <button id="restart-game-button">다시 시작</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const startScreen = document.getElementById('start-screen');
+  const startBtn = document.getElementById('start-btn');
+  const gameUI = document.querySelector('.game-ui');
+
+  startBtn.addEventListener('click', () => {
+    startScreen.style.display = 'none';
+    gameUI.style.display = 'block';
+    loadStage(0);
+  });
+
+  const gameStages = [
+    {
+      witness: {},
+      assets: { background:'../img/window6/22.png', character:'../img/window6/33.png' },
+      dialogue:"밤늦게... X가 허겁지겁 뭔가를 사갔어요.",
+      correctSentence:["X가","어젯밤 11시에","구급상자를","급하게","사가더라고요"],
+      fragments:["어젯밤 11시에","구급상자를","X가","웃으면서","급하게","음료수를","사가더라고요"]
+    },
+    {
+      witness: {},
+      assets: { background:'../img/window6/33.png', character:'../img/window6/55.png' },
+      dialogue:"며칠 전에 X가 가게에 와서 한참 뭘 보고 갔어요.",
+      correctSentence:["X는","창가 쪽 수조를","아주 오랫동안","쳐다보고 있었어요"],
+      fragments:["X는","가게 입구에서","쳐다보고 있었어요","아주 오랫동안","물고기 밥을","창가 쪽 수조를"]
+    },
+    {
+      witness: {},
+      assets: { background:'../img/window6/44.png', character:'../img/window6/77.png' },
+      dialogue:"새벽 2시쯤, 한 남자가 급히 택시를 잡았어요. 어딘가 초조해 보였죠.",
+      correctSentence:["그 남자는","어두운 골목에서","택시를 잡았고","손에","피가 묻어있었어요"],
+      fragments:["그 남자는","새벽 2시에","택시를 잡았고","손에","피가 묻어있었어요","어두운 골목에서","빨리 가자고"]
+    },
+    {
+      witness: {},
+      assets: { background:'../img/window6/55.png', character:'../img/window6/99.png' },
+      dialogue:"그날 새벽, 순찰 중에 수상한 사람을 봤어요.",
+      correctSentence:["새벽 순찰 중","강변에서","수상한 남자가","뛰어가는 것을","목격했어요"],
+      fragments:["새벽 순찰 중","강변에서","수상한 남자가","뛰어가는 것을","경찰서 앞에서","소리쳤어요","목격했어요"]
+    },
+    {
+      witness: {},
+      assets: { background:'../img/window6/66.png', character:'../img/window6/101.png' },
+      dialogue:"X가 저희 카페 단골이에요. 사건 전날 특이한 행동을 했어요.",
+      correctSentence:["X는","사건 전날","갑자기","머리카락을","짧게 잘랐어요"],
+      fragments:["X는","매일 오던","갑자기","머리카락을","짧게 잘랐어요","사건 전날","안경을 잃어버렸어요"]
+    }
+  ];
+
+  const speechBubble=document.getElementById('speech-bubble');
+  const witnessArt=document.getElementById('witness-art');
+  const witnessInfoBox=document.getElementById('witness-info-box');
+  const recordedTestimonies=document.getElementById('recorded-testimonies');
+  const slotsContainer=document.getElementById('sentence-slots');
+  const fragmentsContainer=document.getElementById('word-fragments');
+  const checkButton=document.getElementById('check-button');
+  const hintButton=document.getElementById('hint-button');
+  const nextButton=document.getElementById('next-witness-button');
+  const popup=document.getElementById('confirmation-popup');
+  const confirmYesBtn=document.getElementById('confirm-yes');
+  const confirmNoBtn=document.getElementById('confirm-no');
+  const credibilityScoreEl=document.getElementById('credibility-score');
+  const usefulnessScoreEl=document.getElementById('usefulness-score');
+  const gameEndPopup=document.getElementById('game-end-popup');
+  const gameEndMessage=document.getElementById('game-end-message');
+  const restartGameButton=document.getElementById('restart-game-button');
+
+  let currentStage=0,draggedFragment=null,lastCorrectAnswer="";
+
+  function loadStage(i){
+    if(i>=gameStages.length){endGame();return;}
+    slotsContainer.innerHTML='';
+    fragmentsContainer.innerHTML='';
+    const s=gameStages[i];
+
+    /* ✅ 배경 전환 효과 제거 */
+    document.body.style.transition = 'none';
+    document.body.style.backgroundImage = `url('${s.assets.background}')`;
+
+    witnessArt.style.backgroundImage=`url('${s.assets.character}')`;
+    witnessInfoBox.textContent='';
+    speechBubble.textContent=s.dialogue;
+    speechBubble.classList.remove('hidden');
+    checkButton.classList.remove('hidden');
+    hintButton.classList.remove('hidden');
+    nextButton.classList.add('hidden');
+    shuffleArray([...s.fragments]).forEach(t=>{
+      const el=document.createElement('div');
+      el.textContent=t; el.className='word-fragment'; el.draggable=true;
+      fragmentsContainer.appendChild(el);
+    });
+    s.correctSentence.forEach(()=>{
+      const slot=document.createElement('div');
+      slot.className='slot'; slotsContainer.appendChild(slot);
+    });
+    setTimeout(() => hintButton.click(), 300);
+  }
+
+  checkButton.addEventListener('click',()=>{
+    const slots=slotsContainer.querySelectorAll('.slot');
+    const user=Array.from(slots).map(s=>s.firstChild?.textContent||"").filter(Boolean);
+    if(JSON.stringify(user)===JSON.stringify(gameStages[currentStage].correctSentence)){
+      lastCorrectAnswer=user.join(' ');showPopup();
+    }else alert("증언이 잘못된 것 같습니다. 다시 조합해 보세요.");
+  });
+
+  hintButton.addEventListener('click',()=>{
+    const s=gameStages[currentStage];const slots=slotsContainer.querySelectorAll('.slot');
+    for(let i=0;i<Math.min(3,s.correctSentence.length);i++){
+      if(!slots[i].hasChildNodes()){
+        const w=s.correctSentence[i];
+        const frag=[...fragmentsContainer.querySelectorAll('.word-fragment')].find(f=>f.textContent===w);
+        if(frag) slots[i].appendChild(frag);
+      }
+    }
+    hintButton.classList.add('hidden');
+  });
+
+  nextButton.addEventListener('click',()=>{currentStage++;loadStage(currentStage);});
+
+  document.addEventListener('dragstart',e=>{if(e.target.classList.contains('word-fragment'))draggedFragment=e.target;});
+  document.addEventListener('dragover',e=>{
+    if(e.target.classList.contains('slot')||e.target.id==='word-fragments'||fragmentsContainer.contains(e.target))e.preventDefault();
+  });
+  document.addEventListener('drop',e=>{
+    e.preventDefault();if(!draggedFragment)return;
+    const t=e.target;
+    if(t.classList.contains('slot')&&!t.hasChildNodes())t.appendChild(draggedFragment);
+    else if(t.id==='word-fragments'||t.closest('#word-fragments'))fragmentsContainer.appendChild(draggedFragment);
+    draggedFragment=null;
+  });
+
+  function showPopup(){
+    credibilityScoreEl.textContent=Math.floor(Math.random()*31)+70;
+    usefulnessScoreEl.textContent=Math.floor(Math.random()*41)+60;
+    popup.classList.remove('hidden');
+  }
+  function record(){
+    const entry=document.createElement('div');
+    entry.className='testimony-entry';
+    entry.innerHTML=`<div class="content">"${lastCorrectAnswer}"</div>`;
+    recordedTestimonies.appendChild(entry);
+  }
+  function hideAndNext(){
+    popup.classList.add('hidden');
+    speechBubble.classList.add('hidden');
+    checkButton.classList.add('hidden');
+    hintButton.classList.add('hidden');
+    nextButton.classList.remove('hidden');
+    slotsContainer.innerHTML='';fragmentsContainer.innerHTML='';
+  }
+  confirmYesBtn.addEventListener('click',()=>{record();hideAndNext();});
+  confirmNoBtn.addEventListener('click',()=>{hideAndNext();});
+
+  function endGame(){
+    gameEndMessage.textContent='수사 완료!';
+    gameEndPopup.classList.remove('hidden');
+    document.querySelector('.game-ui').classList.add('hidden');
+  }
+  restartGameButton.addEventListener('click',()=>{
+    currentStage=0;
+    recordedTestimonies.innerHTML='';
+    gameEndPopup.classList.add('hidden');
+    document.querySelector('.game-ui').classList.remove('hidden');
+    loadStage(currentStage);
+  });
+
+  function shuffleArray(a){
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+});
+</script>
+
+<!-- ============================ -->
+<!-- ✅ 여기부터 "추가" 파트만 붙인 것 -->
+<!-- ============================ -->
+
+<!-- ✅ 증거 획득 팝업 (팝업 + 버튼 모두 이미지로 구성) -->
+<div id="final-popup" class="hidden">
+  <img id="final-popup-img" src="../img/window6/88.png" alt="증거획득창">
+  <img id="final-okay-img" src="../img/window6/1010.png" alt="확인버튼">
+</div>
+
+<style>
+/* 팝업 전체 배경(어두운 반투명) */
+#final-popup {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  z-index: 3000;
+}
+
+/* 팝업 이미지 */
+#final-popup-img {
+  width: 700px;       /* ✅ 팝업 크기 조절 */
+  max-width: 90%;
+  height: auto;
+  pointer-events: none; /* ✅ 클릭 차단 */
+}
+
+/* OKAY 버튼 (완전 이미지 버튼) */
+#final-okay-img {
+  position: absolute;
+  top: 69%;           /* ✅ 버튼 위치 조정 가능 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;       /* ✅ 버튼 크기 조절 가능 */
+  height: auto;
+  cursor: pointer;
+  z-index: 3100;
+  transition: transform 0.2s ease;
+}
+#final-okay-img:hover {
+  transform: translateX(-50%) scale(1.05);
+}
+#final-okay-img:active {
+  transform: translateX(-50%) scale(0.95);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const nextButton = document.getElementById('next-witness-button');
+  const finalPopup = document.getElementById('final-popup');
+  const okayBtn = document.getElementById('final-okay-img');
+  const gameUI = document.querySelector('.game-ui');
+  const gameEndPopup = document.getElementById('game-end-popup');
+
+  /* ✅ 배경 파일명으로 스테이지 확인 */
+  const bgOrder = ['22.png','33.png','44.png','55.png','66.png'];
+  function getCurrentStageIndexByBg() {
+    const bg = document.body.style.backgroundImage;
+    const m = bg.match(/(\d+)\.png/);
+    if (!m) return -1;
+    return bgOrder.indexOf(m[0]);
+  }
+
+  /* ✅ 버튼 표시 상태 감시 */
+  const btnObserver = new MutationObserver(() => {
+    if (!nextButton.classList.contains('hidden')) {
+      const idx = getCurrentStageIndexByBg();
+      nextButton.textContent = (idx === 4) ? '증거 수집 완료' : '다음 증인';
+    }
+  });
+  btnObserver.observe(nextButton, { attributes: true, attributeFilter: ['class'] });
+
+  /* ✅ 마지막이면 팝업 표시 */
+  nextButton.addEventListener('click', (e) => {
+    if (nextButton.textContent === '증거 수집 완료') {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      finalPopup.classList.remove('hidden');
+    }
+  }, true);
+
+  /* ✅ 원래 endGame이 호출되면 팝업으로 대체 */
+  const uiObserver = new MutationObserver(() => {
+    if (gameUI.classList.contains('hidden')) {
+      if (gameEndPopup) gameEndPopup.classList.add('hidden');
+      finalPopup.classList.remove('hidden');
+    }
+  });
+  uiObserver.observe(gameUI, { attributes: true, attributeFilter: ['class'] });
+
+  /* ✅ OKAY 버튼 누르면 index의 showWindow7() 호출 (추가됨) */
+  okayBtn.addEventListener('click', () => {
+    if (window.parent && window.parent.showWindow7) {
+      console.log("✅ 부모의 showWindow7() 호출됨");
+      window.parent.showWindow7(); // index.html 내부일 경우 부모 함수 호출
+    } else {
+      console.log("⚠️ 부모 없음 → 단독 실행 모드로 window7.html로 이동");
+      window.location.href = "window7.html"; // 독립 실행 시 기존 방식 유지
+    }
+  });
+});
+</script>
+
+</body>
+</html>

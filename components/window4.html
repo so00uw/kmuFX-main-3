@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Window 4 - 완성본</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: transparent; /* ✅ 검은 배경 완전 제거 */
+    overflow: hidden;
+  }
+
+  #stage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1280px;
+    height: 720px;
+    background: url("../img/window4/자산%2012.png") no-repeat center center;
+    background-size: contain;
+  }
+
+  .character { position: absolute; bottom: 43px; left: 170px; width: 300px; z-index: 5; }
+  .X { position: absolute; bottom: 140px; left: 550px; width: 440px; z-index: 2; }
+
+  .speech { position: absolute; bottom: 455px; left: 220px; width: 160px; z-index: 6; }
+  .speech.wrong { left: 265px; width: 50px; }
+  .speech.end { left: 235px; width: 120px; }
+
+  .hearts {
+    position: absolute; top: 50px; left: 140px;
+    display: flex; gap: 12px; z-index: 7;
+  }
+  .hearts img { width: 60px; }
+
+  .dot {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    border: 2px solid #111;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 999;
+  }
+
+  .dot1 { top: 370px; left: 600px; }
+  .dot2 { top: 370px; left: 780px; }
+  .dot3 { top: 370px; left: 950px; }
+  .dot4 { top: 450px; left: 600px; }
+  .dot5 { top: 450px; left: 780px; }
+  .dot6 { top: 440px; left: 950px; }
+
+  #lineCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1280px; height: 720px;
+    z-index: 10;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="lineCanvas" width="1280" height="720"></canvas>
+
+    <div class="hearts">
+      <img src="../img/window4/자산%2015.png" id="h1">
+      <img src="../img/window4/자산%2015.png" id="h2">
+      <img src="../img/window4/자산%2015.png" id="h3">
+    </div>
+
+    <img src="../img/window4/자산%2013.png" class="character" id="character">
+    <img src="../img/window4/자산%209.png" class="X" id="X">
+    <img src="../img/window4/자산%2017.png" class="speech" id="speech">
+
+    <div class="dot dot1"></div>
+    <div class="dot dot2"></div>
+    <div class="dot dot3"></div>
+    <div class="dot dot4"></div>
+    <div class="dot dot5"></div>
+    <div class="dot dot6"></div>
+  </div>
+
+<script>
+const stage = document.getElementById("stage");
+const canvas = document.getElementById("lineCanvas");
+const ctx = canvas.getContext("2d");
+const hearts = document.querySelectorAll(".hearts img");
+const dots = document.querySelectorAll(".dot");
+const character = document.getElementById("character");
+const speech = document.getElementById("speech");
+const X = document.getElementById("X");
+
+let selected = null;
+let mistakes = 0;
+let round = 1;
+let activeLines = [];
+let matchedPairs = [];
+
+const correctPairs1 = { dot1: "dot5", dot2: "dot6", dot3: "dot4" };
+const normalChar = "../img/window4/자산%2013.png";
+const normalSpeech = "../img/window4/자산%2017.png";
+const wrongChar = "../img/window4/자산%2011.png";
+const wrongSpeech = "../img/window4/자산%2019.png";
+const endSpeech = "../img/window4/자산%2021.png";
+
+function getDotCenter(dot) {
+  const rect = dot.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2 - stageRect.left, y: rect.top + rect.height / 2 - stageRect.top };
+}
+
+function drawLine(dotA, dotB, color = "white") {
+  const a = getDotCenter(dotA), b = getDotCenter(dotB);
+  ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  return { a, b, color };
+}
+
+function redrawLines() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  activeLines.forEach(l => {
+    ctx.strokeStyle = l.color; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(l.a.x, l.a.y); ctx.lineTo(l.b.x, l.b.y); ctx.stroke();
+  });
+}
+
+function wrongAnswer(lineData) {
+  mistakes++;
+  if (mistakes <= 3) hearts[mistakes - 1].src = "../img/window4/자산%2016.png";
+  setTimeout(() => { activeLines = activeLines.filter(l => l !== lineData); redrawLines(); }, 600);
+  character.src = wrongChar;
+  speech.src = wrongSpeech;
+  speech.className = "speech wrong";
+  if (mistakes >= 3) {
+    setTimeout(() => {
+      speech.src = endSpeech;
+      speech.className = "speech end";
+      setTimeout(startRobotCheck, 2000);
+    }, 2000);
+  }
+}
+
+function rightAnswer() {
+  character.src = normalChar;
+  speech.src = normalSpeech;
+  speech.className = "speech";
+}
+
+function nextRound() {
+  round = 2;
+  mistakes = 0;
+  activeLines = [];
+  matchedPairs = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hearts.forEach(h => (h.src = "../img/window4/자산%2015.png"));
+  character.src = normalChar;
+  speech.src = normalSpeech;
+  X.src = "../img/window4/자산%2014.png";
+  console.log("➡️ 2라운드 시작");
+}
+
+dots.forEach(dot => {
+  dot.addEventListener("click", () => {
+    if (!selected) {
+      selected = dot;
+      dot.style.background = "rgba(255,255,255,0.8)";
+    } else {
+      if (dot === selected) return;
+      const line = drawLine(selected, dot);
+      activeLines.push(line);
+      if (round === 1) {
+        const isCorrect = correctPairs1[selected.classList[1]] === dot.classList[1];
+        if (isCorrect) {
+          selected.style.background = "rgba(0,255,0,0.4)";
+          dot.style.background = "rgba(0,255,0,0.4)";
+          rightAnswer();
+          matchedPairs.push(selected.classList[1], dot.classList[1]);
+          if (matchedPairs.length === 6) setTimeout(nextRound, 1000);
+        } else wrongAnswer(line);
+      } else wrongAnswer(line);
+      selected = null;
+    }
+  });
+});
+
+/* ✅ 로봇체크 & 캡챠 영역 */
+function startRobotCheck() {
+  if (document.getElementById('robot-check')) return;
+  const overlay=document.createElement('div');
+  Object.assign(overlay.style,{position:'absolute',inset:'0',background:'rgba(0,0,0,0.45)',zIndex:'2000',display:'flex',alignItems:'center',justifyContent:'center'});
+  const card=document.createElement('div');
+  Object.assign(card.style,{width:'520px',background:'#fff',borderRadius:'10px',padding:'22px 24px',boxShadow:'0 20px 60px rgba(0,0,0,.35)'});
+  const checkbox=document.createElement('input');
+  checkbox.type='checkbox'; checkbox.id='rbx';
+  Object.assign(checkbox.style,{width:'24px',height:'24px',cursor:'pointer'});
+  const label=document.createElement('label');
+  label.htmlFor='rbx'; label.textContent="I'm not a robot"; label.style.fontSize='20px';
+  const top=document.createElement('div');
+  Object.assign(top.style,{display:'flex',alignItems:'center',gap:'14px',marginBottom:'14px'});
+  top.appendChild(checkbox); top.appendChild(label);
+  const hint=document.createElement('div');
+  hint.textContent='이 확인 후 이미지 검증 단계로 진행됩니다.'; hint.style.fontSize='13px'; hint.style.color='#666';
+  const btn=document.createElement('button');
+  btn.textContent='확인';
+  Object.assign(btn.style,{padding:'10px 16px',border:'1px solid #e0e0e0',borderRadius:'8px',background:'#1976d2',color:'#fff',fontSize:'14px',cursor:'pointer'});
+  btn.onclick=()=>{ if(!checkbox.checked){ checkbox.style.outline='2px solid #f44336'; setTimeout(()=>checkbox.style.outline='none',500); return; } overlay.remove(); startCaptcha(); };
+  const bottom=document.createElement('div');
+  Object.assign(bottom.style,{display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:'10px'});
+  bottom.appendChild(hint); bottom.appendChild(btn);
+  card.appendChild(top); card.appendChild(bottom); overlay.appendChild(card); stage.appendChild(overlay);
+}
+
+/* ✅ 캡챠 (두 번째 코드 그대로 삽입) */
+function startCaptcha() {
+  const toHide = document.querySelectorAll('.dot, .speech, .character, .X, .hearts');
+  toHide.forEach(el => el && (el.style.display = 'none'));
+  const lineCv = document.getElementById('lineCanvas');
+  if (lineCv) lineCv.style.display = 'none';
+  if (document.getElementById('captcha-stage')) return;
+  const captcha = document.createElement('div');
+  captcha.id = 'captcha-stage';
+  Object.assign(captcha.style,{position:'absolute',inset:'0',width:'1280px',height:'720px',zIndex:'20'});
+  captcha.innerHTML = `<img src="../img/window4/bg.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;">`;
+  stage.appendChild(captcha);
+  const correctAnswers = new Set(['grid_06','cut_02']);
+  const selectedKeys = new Set();
+
+  function makeBox(src,left,top,w,h){
+    const key = src.split('/').pop().replace('.png','');
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style,{position:'absolute',left:left+'px',top:top+'px',width:w+'px',height:h+'px',cursor:'pointer',zIndex:'2050'});
+    const img=document.createElement('img');
+    img.src=src;
+    Object.assign(img.style,{position:'absolute',inset:'0',width:'100%',height:'100%',objectFit:'contain',transition:'filter .15s ease'});
+    wrap.appendChild(img);
+    wrap.onclick=()=>{ if(selectedKeys.has(key)){ selectedKeys.delete(key); img.style.filter='brightness(1)'; } else { selectedKeys.add(key); img.style.filter='brightness(0.6)'; } };
+    captcha.appendChild(wrap);
+  }
+
+  makeBox("../img/window4/grid_01.png",305,150,160,160);
+  makeBox("../img/window4/grid_02.png",474,150,160,160);
+  makeBox("../img/window4/grid_03.png",644,150,160,160);
+  makeBox("../img/window4/grid_04.png",815,150,160,160);
+  makeBox("../img/window4/grid_05.png",305,320,160,160);
+  makeBox("../img/window4/grid_07.png",644,320,160,160);
+  makeBox("../img/window4/grid_08.png",815,320,160,160);
+  makeBox("../img/window4/grid_09.png",305,490,160,160);
+  makeBox("../img/window4/grid_10.png",474,490,160,160);
+  makeBox("../img/window4/grid_11.png",644,490,160,160);
+  makeBox("../img/window4/grid_12.png",815,490,160,160);
+  makeBox("../img/window4/cut_02.png",800,180,190,220);
+  makeBox("../img/window4/cut_04.png",580,220,300,320);
+  makeBox("../img/window4/cut_05.png",305,347,310,310);
+  makeBox("../img/window4/cut_06.png",585,289,380,480);
+
+  makeBox("../img/window4/grid_06.png",474,320,160,160);
+  makeBox("../img/window4/cut_03.png",400,450,200,250);
+
+  const verifyBtn=document.createElement('div');
+  Object.assign(verifyBtn.style,{position:'absolute',left:'800px',top:'650px',width:'170px',height:'60px',cursor:'pointer',zIndex:'2100',background:'transparent',border:'none',opacity:'0'});
+  captcha.appendChild(verifyBtn);
+
+  const backBtn=document.createElement('div');
+  Object.assign(backBtn.style,{position:'absolute',left:'300px',top:'670px',width:'60px',height:'40px',cursor:'pointer',zIndex:'2100',background:'transparent',border:'none',opacity:'0'});
+  captcha.appendChild(backBtn);
+
+  backBtn.onclick=()=>{ selectedKeys.clear(); document.querySelectorAll('#captcha-stage img').forEach(i=>{ if(!i.src.includes('bg.png')) i.style.filter='brightness(1)'; }); };
+
+  verifyBtn.onclick=()=>{
+    const hasCorrect=[...selectedKeys].some(k=>correctAnswers.has(k));
+    const pop=document.createElement('div');
+    Object.assign(pop.style,{position:'absolute',inset:'0',background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:'2300'});
+    if(hasCorrect){
+      const piece=document.createElement('img');
+      piece.src='../img/window4/1111.png';
+      Object.assign(piece.style,{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:'70%',height:'auto',objectFit:'contain',zIndex:'2400',cursor:'pointer'});
+     piece.onclick = () => {
+  if (window.parent && window.parent.showWindow6) {
+    window.parent.showWindow6();  // ✅ index의 showWindow6() 호출
+  } else {
+    window.location.href = "window6.html";  // fallback (단독 실행용)
+  }
+};
+
+      pop.appendChild(piece);
+    }else{
+      const box=document.createElement('div');
+      Object.assign(box.style,{background:'rgba(0,0,0,0.75)',color:'#fff',borderRadius:'12px',padding:'20px 26px',textAlign:'center',fontFamily:'system-ui',fontSize:'22px'});
+      box.textContent='틀렸습니다!'; pop.appendChild(box);
+      setTimeout(()=>pop.remove(),1500);
+    }
+    captcha.appendChild(pop);
+  };
+}
+</script>
+</body>
+</html>

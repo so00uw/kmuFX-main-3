@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Window 9 - Camera Auto Capture</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DungGeunMo&display=swap');
+
+body {
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'DungGeunMo', monospace;
+  color: white;
+}
+
+.camera-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+#frame {
+  position: relative;
+  display: block;
+  height: 90vh;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#camera {
+  position: absolute;
+  top: 55%;
+  left: 51%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  width: 85%;
+  height: 85%;
+  z-index: 1;
+}
+
+#countdown {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 100px;
+  color: white;
+  text-shadow: 0 0 20px rgba(0,0,0,0.8);
+  z-index: 3;
+}
+
+#ending-screen {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 50px;
+  letter-spacing: 2px;
+  text-shadow:
+    0 0 8px rgba(255, 255, 255, 0.8),
+    0 0 15px rgba(255, 255, 255, 0.5);
+  z-index: 999;
+  animation: fadeIn 2s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+<div class="camera-wrapper">
+  <video id="camera" autoplay playsinline></video>
+  <img id="frame" src="../img/window9/111.png" alt="camera frame">
+  <div id="countdown"></div>
+</div>
+
+<div id="ending-screen">X is You</div>
+
+<script>
+const video = document.getElementById('camera');
+const frame = document.getElementById('frame');
+const countdown = document.getElementById('countdown');
+const endingScreen = document.getElementById('ending-screen');
+
+// 카메라 시작
+function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("HTTPS 또는 localhost에서만 카메라를 사용할 수 있어요.");
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      console.log("getUserMedia OK");
+      video.srcObject = stream;
+      video.muted = true;
+
+      const p = video.play();
+      if (p && p.catch) p.catch(e => console.error("play error", e));
+
+      // 실제로 화면에 재생되면 카운트다운 시작
+      video.addEventListener('playing', () => {
+        console.log("video playing, start countdown");
+        setTimeout(startCountdown, 3000);
+      }, { once: true });
+    })
+    .catch(err => {
+      console.error("getUserMedia error", err);
+      alert("카메라 권한을 허용해 주세요.");
+    });
+}
+
+// 카운트다운
+function startCountdown() {
+  let count = 3;
+  countdown.textContent = count;
+
+  const timer = setInterval(() => {
+    count--;
+    if (count > 0) {
+      countdown.textContent = count;
+    } else {
+      clearInterval(timer);
+      countdown.textContent = "";
+      takePhoto();
+    }
+  }, 1000);
+}
+
+// 사진 촬영 + 서버 전송
+function takePhoto() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const overlay = new Image();
+  overlay.src = frame.src;
+
+  overlay.onload = () => {
+    ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
+
+    const imageData = canvas.toDataURL("image/png");
+
+    fetch("http://localhost:3000/print", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imageData })
+    }).catch(err => {
+      console.error("사진 전송 실패", err);
+    });
+
+    showEnding();
+  };
+
+  overlay.onerror = () => {
+    console.error("프레임 이미지 로드 실패");
+    showEnding();
+  };
+}
+
+// 엔딩 화면 + 부모에게 메시지
+function showEnding() {
+  endingScreen.style.display = "flex";
+
+  if (video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+  }
+
+  setTimeout(() => {
+    window.parent.postMessage("RETURN_TO_WINDOW1", "*");
+  }, 3000);
+}
+
+// 페이지 로드되면 바로 카메라 시작
+startCamera();
+</script>

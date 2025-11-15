@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Window 8 - 조각 수집 완료</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+body {
+  margin: 0;
+  background: transparent; /* ✅ 검은 배경 완전히 제거 */
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* 🔹 팝업 박스 (이미지 중심 정렬) */
+#popup {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 🔹 팝업 이미지 */
+#popup img {
+  width: 90vw;
+  max-width: 1000px;
+  height: auto;
+
+}
+
+#close-btn {
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0; /* ✅ 완전히 투명 */
+}
+#close-btn::before, #close-btn::after {
+  display: none; /* ✅ 내부 X 모양도 숨김 */
+}
+
+</style>
+</head>
+
+<body>
+  <!-- ✅ 팝업 이미지 -->
+  <div id="popup">
+    <img src="../img/window8/123.png" alt="조각 수집 완료 팝업">
+    <button id="close-btn" aria-label="닫기"></button>
+  </div>
+
+<script>
+// 🔹 X 버튼 클릭 시 window9로 이동
+document.getElementById('close-btn').addEventListener('click', () => {
+  if (window.parent && window.parent.showWindow9) {
+    console.log("✅ 부모의 showWindow9() 호출됨");
+    window.parent.showWindow9();  // index.html 내부 이동
+  } else {
+    console.log("⚠️ 부모 없음 → 단독 실행 모드로 window9.html로 이동");
+    window.location.href = "window9.html"; // 독립 실행 시
+  }
+});
+</script>
+</body>
+</html>

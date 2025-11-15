@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exhibition</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #stage {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      margin: 0 auto;
+      background: #000;
+    }
+
+    iframe {
+      position: absolute;
+      border: none;
+    }
+
+    /* ✅ 배경 데코 이미지가 클릭을 가로채지 않도록 */
+    #static-windows .static-window {
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- 고정 해상도 스테이지(1920x1080) -->
+  <div id="stage">
+    <div id="layer-bg" aria-hidden="true"></div>
+
+    <!-- 정적인 배경 이미지 -->
+    <div id="static-windows">
+      <img src="img/image7.png" class="static-window" id="fake1">
+      <img src="img/image8.png" class="static-window" id="fake2">
+      <img src="img/image9.png" class="static-window" id="fake3">
+      <img src="img/image11.png" class="static-window" id="fake4">
+      <img src="img/image14.png" class="static-window" id="fake5">
+      <img src="img/image15.png" class="static-window" id="fake6">
+      <img src="img/image22.png" class="static-window" id="fake7">
+      <img src="img/image23.png" class="static-window" id="fake8">
+      <img src="img/image24.png" class="static-window" id="fake9">
+      <img src="img/image25.png" class="static-window" id="fake10">
+      <img src="img/image26.png" class="static-window" id="fake11">
+      <img src="img/image27.png" class="static-window" id="fake12">
+      <img src="img/image7.png" class="static-window" id="fake13">
+      <img src="img/image23.png" class="static-window" id="fake14">
+      <img src="img/image23.png" class="static-window" id="fake15">
+      <img src="img/image10.png" class="static-window" id="fake16">
+      <img src="img/image11.png" class="static-window" id="fake17">
+      <img src="img/image15.png" class="static-window" id="fake18">
+      <img src="img/image12.png" class="static-window" id="fake19">
+    </div>
+
+    <!-- 창들이 올라가는 레이어 -->
+    <div id="layer-windows">
+
+      <!-- 1 -->
+      <iframe id="w1" src="components/window1.html"
+              style="width:100%; height:100%; left:0; top:0; z-index:6;"></iframe>
+
+      <!-- 2 -->
+      <iframe id="w2" src="components/window2.html"
+              scrolling="no"
+              style="width:700px; height:600px; left:50%; top:50%;
+              transform:translate(-50%, -50%);
+              background:transparent; overflow:hidden;
+              z-index:5; display:none;"></iframe>
+
+      <!-- 4 -->
+      <iframe id="w4" src="components/window4.html"
+              scrolling="no"
+              style="width:1600px; height:900px;
+              position:absolute; left:15px; top:400px;
+              border:none; background:transparent; overflow:hidden;
+              z-index:5; display:none;
+              transform-origin: top left; transform: scale(0.65);">
+      </iframe>
+
+      <!-- 6 -->
+      <iframe id="w6" src="components/window6.html"
+              scrolling="no"
+              style="width:1600px; height:900px;
+              position:absolute; left:840px; top:450px;
+              border:none; background:transparent; overflow:hidden;
+              z-index:5; display:none;
+              transform-origin: top left; transform: scale(0.60);">
+      </iframe>
+
+      <!-- 7 -->
+      <iframe id="w7" src="components/window7.html"
+              scrolling="no"
+              style="width:1600px; height:900px;
+              position:absolute; left:800px; top:45px;
+              border:none; background:transparent; overflow:hidden;
+              z-index:5; display:none;
+              transform-origin: top left; transform: scale(0.65);">
+      </iframe>
+
+      <!-- 8 -->
+      <iframe id="w8" src="components/window8.html"
+              scrolling="no"
+              style="width:1600px; height:900px;
+              position:absolute; left:400px; top:250px;
+              border:none; background:transparent; overflow:hidden;
+              z-index:5; display:none;
+              transform-origin: top left; transform: scale(0.70);">
+      </iframe>
+
+      <!-- ✅ 9 (전체화면 엔딩용) -->
+      <iframe id="w9" src=""
+              scrolling="no"
+              style="width:100%; height:100%;
+              position:absolute; left:0; top:0;
+              border:none; background:transparent; overflow:hidden;
+              z-index:10; display:none;">
+      </iframe>
+
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    /* ✅ window1 → window2 */
+    window.showWindow2 = function () {
+      const w1 = document.getElementById('w1');
+      const w2 = document.getElementById('w2');
+      if (w1) w1.style.display = 'none';
+      if (w2) {
+        w2.style.display = 'block';
+        setTimeout(() => w2.contentWindow && w2.contentWindow.focus(), 0);
+      }
+    };
+
+    /* ✅ window2 → window4 */
+
+
+
+
+
+    window.showWindow4 = function () {
+      const w2 = document.getElementById('w2');
+      if (w2) w2.style.display = 'none';
+      ['fake5','fake6','fake7','fake15','fake16','fake19','fake12'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const w4 = document.getElementById('w4');
+      if (w4) {
+        w4.style.display = 'block';
+        w4.style.zIndex = 10; // ⬅ 위로 올림
+        setTimeout(() => w4.contentWindow && w4.contentWindow.focus(), 0);
+      } else {
+        console.error("❌ w4 iframe을 찾을 수 없습니다.");
+      }
+    };
+
+    /* ✅ window4 → window6 */
+    window.showWindow6 = function () {
+      const w4 = document.getElementById('w4');
+      if (w4) w4.style.display = 'none';
+      ['fake1','fake3','fake4','fake13','fake10'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const w6 = document.getElementById('w6');
+      if (w6) {
+        w6.style.display = 'block';
+        w6.style.zIndex = 10; // ⬅ 위로 올림
+        setTimeout(() => {
+          if (w6.contentWindow) w6.contentWindow.focus();
+        }, 100);
+      } else {
+        console.error("❌ w6 iframe을 찾을 수 없습니다.");
+      }
+    };
+
+    /* ✅ window6 → window7 */
+    window.showWindow7 = function () {
+      const w6 = document.getElementById('w6');
+      if (w6) w6.style.display = 'none';
+      ['fake18','fake17','fake14','fake11'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const w7 = document.getElementById('w7');
+      if (w7) {
+        w7.style.display = 'block';
+        w7.style.zIndex = 10; // ⬅⬅⬅ 핵심 수정: 클릭 가로채는 요소 위로 올림
+        setTimeout(() => w7.contentWindow && w7.contentWindow.focus(), 100);
+      } else {
+        console.error("❌ w7 iframe을 찾을 수 없습니다.");
+      }
+    };
+
+    /* ✅ window7 → window8 */
+    window.showWindow8 = function () {
+      const w7 = document.getElementById('w7');
+      if (w7) w7.style.display = 'none';
+      const w8 = document.getElementById('w8');
+      if (w8) {
+        w8.style.display = 'block';
+        w8.style.zIndex = 10; // ⬅ 위로 올림(안전)
+        setTimeout(() => w8.contentWindow && w8.contentWindow.focus(), 0);
+      } else {
+        console.error("❌ w8 iframe을 찾을 수 없습니다.");
+      }
+    };
+
+/* ✅ window8 → window9 (엔딩 전체화면 + 타이머 정상 작동) */
+window.showWindow9 = function () {
+  ['w1','w2','w4','w6','w7','w8'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  const w9 = document.getElementById('w9');
+  if (w9) {
+    console.log("🎬 window9 표시 중...");
+    w9.style.display = 'block';
+    w9.style.zIndex = 10;
+
+    // ✅ iframe 내부를 새로 고쳐서 window9.html의 스크립트 재실행
+    w9.setAttribute('src', 'components/window9.html?t=' + Date.now());
+    // ✅ 로드 완료 후 포커스 및 콘솔 확인
+    w9.onload = () => {
+      console.log("🎥 window9 iframe 다시 로드됨 (카운트다운 작동 가능)");
+      setTimeout(() => {
+        if (w9.contentWindow) w9.contentWindow.focus();
+      }, 100);
+    };
+  } else {
+    console.error("❌ w9 iframe을 찾을 수 없습니다.");
+  }
+};
+
+
+/* ✅ window9 → window1 (엔딩 종료 후 처음으로) */
+window.returnToWindow1 = function () {
+  console.log("🎬 returnToWindow1() 호출됨 (index.html)");
+
+  // ✅ 모든 창 닫기 (혹시라도 남아 있을 경우 대비)
+  ['w1','w2','w4','w6','w7','w8','w9'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // ✅ 엔딩이 완전히 끝난 뒤 전체 페이지 새로고침
+  setTimeout(() => {
+    console.log("🔁 모든 과정 완료 → 전시 페이지 새로고침 시작");
+    window.location.reload(); // index.html 전체 새로고침
+  }, 4000); // 엔딩 'X is You' 화면이 충분히 보이도록 4초 뒤 새로고침
+};
+
+   
+  </script>
+</body>
+</html>
