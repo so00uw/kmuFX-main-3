@@ -1,17 +1,21 @@
-<!-- components/window2.html -->
 <div id="window2" class="window window2" style="left:0; top:0; width:700px; border:none; box-shadow:none;">
-  <!-- 배경 이미지 -->
   <img src="../img/window2/bdimg.png" alt="window2 background" class="win2-bg" draggable="false">
 
-  <!-- 문 영역 -->
-  <div class="win2-doors">
+  <div class="win2-doors" id="doorLayer">
     <img src="../img/window2/door_1.png" class="door" id="door1" draggable="false">
     <img src="../img/window2/door_2.png" class="door" id="door2" draggable="false">
     <img src="../img/window2/door_3.png" class="door" id="door3" draggable="false">
     <img src="../img/window2/door_4.png" class="door" id="door4" draggable="false">
   </div>
 
-  <!-- 팝업 -->
+  <!-- window2 첫 진입 팝업 -->
+  <div class="intro-popup show" id="introPopup">
+    <div class="intro-popup-inner">
+      <img src="../img/window2/Group 9.jpg" alt="intro popup" class="intro-popup-img" draggable="false">
+      <button class="intro-yes-hotspot" id="introYesButton" aria-label="yes"></button>
+    </div>
+  </div>
+
   <div class="popup" id="popup1">
     <img src="../img/window2/popup_1.png" draggable="false">
     <div class="popup-close" data-popup="1"></div>
@@ -29,7 +33,6 @@
     <div class="popup-close" data-popup="4"></div>
   </div>
 
-  <!-- 퍼즐 조각 획득 팝업 -->
   <div class="pzpop" id="pzpop1">
     <img src="../img/window2/pzpop_1.png" draggable="false">
     <div class="pz-okay" data-pz="1"></div>
@@ -48,41 +51,124 @@
   </div>
 
   <style>
-    /* ---- window2 스타일 ---- */
-    #window2 { position: relative; overflow: hidden; }
+    #window2 {
+      position: relative;
+      overflow: hidden;
+    }
 
-    .win2-bg { width: 100%; height: auto; display: block; user-select: none; }
+    .win2-bg {
+      width: 100%;
+      height: auto;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
 
-    .win2-doors { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    .win2-doors {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .win2-doors.enabled {
+      pointer-events: auto;
+    }
 
     .door {
       position: absolute;
       cursor: pointer;
-      transition: transform 0.4s ease;
+      transition:
+        transform 0.28s ease,
+        filter 0.28s ease,
+        opacity 0.28s ease,
+        box-shadow 0.28s ease;
       transform-origin: left center;
+      will-change: transform, filter;
     }
 
-    .door:hover { transform: scale(1.05); }
-    .door.open { transform: rotateY(-25deg); }
+    .door.active {
+      transform: scale(1.05);
+      filter:
+        drop-shadow(0 0 10px rgba(255,255,255,0.95))
+        drop-shadow(0 0 18px rgba(255,255,255,0.8))
+        drop-shadow(0 0 30px rgba(255,255,255,0.55));
+      z-index: 5;
+    }
 
-    /* 문 위치 */
+    .door.dimmed {
+      filter: blur(5px) brightness(0.75);
+      opacity: 0.72;
+    }
+
+    .door.open {
+      transform: rotateY(-25deg);
+    }
+
     #door1 { left: 90px; top: 180px; width: 150px; }
     #door2 { left: 230px; top: 200px; width: 170px; }
     #door3 { left: 380px; top: 120px; width: 170px; }
     #door4 { left: 530px; top: 230px; width: 150px; }
 
-    /* ---- 팝업 ---- */
+    .intro-popup {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      z-index: 50;
+      background: transparent;
+    }
+
+    .intro-popup.hidden {
+      display: none;
+    }
+
+    .intro-popup-inner {
+      position: relative;
+      width: 314px;
+      height: 130px;
+      margin-top: 250px;
+      margin-left: -150px;
+    }
+
+    .intro-popup-img {
+      width: 150%;
+      height: 150%;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .intro-yes-hotspot {
+      position: absolute;
+      left: 155px;
+      top: 129px;
+      width: 102px;
+      height: 51px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      padding: 0;
+      z-index: 2;
+    }
+
     .popup,
     .pzpop {
       position: absolute;
-      top: 50%; left: 50%;
+      top: 50%;
+      left: 50%;
       transform: translate(-50%, -50%) scale(0);
       transition: transform 0.4s ease, opacity 0.3s ease;
-      opacity: 0; z-index: 10;
+      opacity: 0;
+      z-index: 10;
     }
 
     .popup img, .pzpop img {
-      width: 400px; height: auto;
+      width: 400px;
+      height: auto;
       display: block;
       pointer-events: none;
     }
@@ -94,32 +180,69 @@
 
     .popup-close, .pz-close {
       position: absolute;
-      top: 15px; right: 15px;
-      width: 40px; height: 40px;
+      top: 15px;
+      right: 15px;
+      width: 40px;
+      height: 40px;
       cursor: pointer;
       background: transparent;
     }
 
     .pz-okay {
       position: absolute;
-      left: 50%; bottom: 30px;
+      left: 50%;
+      bottom: 30px;
       transform: translateX(-50%);
-      width: 120px; height: 50px;
+      width: 120px;
+      height: 50px;
       cursor: pointer;
       background: transparent;
     }
 
-    .pzpop { z-index: 20; }
+    .pzpop {
+      z-index: 20;
+    }
   </style>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const doors = document.querySelectorAll('#window2 .door');
-      const popupCloses = document.querySelectorAll('#window2 .popup-close');
-      const okayButtons = document.querySelectorAll('#window2 .pz-okay');
+      const window2 = document.getElementById('window2');
+      const doorLayer = window2.querySelector('#doorLayer');
+      const doors = window2.querySelectorAll('.door');
+      const popupCloses = window2.querySelectorAll('.popup-close');
+      const okayButtons = window2.querySelectorAll('.pz-okay');
+      const introPopup = window2.querySelector('#introPopup');
+      const introYesButton = window2.querySelector('#introYesButton');
 
-      // 문 클릭 → 문 열리고 해당 팝업 열기
+      function setDoorHoverState(activeDoor) {
+        doors.forEach((door) => {
+          if (door === activeDoor) {
+            door.classList.add('active');
+            door.classList.remove('dimmed');
+          } else {
+            door.classList.remove('active');
+            door.classList.add('dimmed');
+          }
+        });
+      }
+
+      function resetDoorHoverState() {
+        doors.forEach((door) => {
+          door.classList.remove('active');
+          door.classList.remove('dimmed');
+        });
+      }
+
+      introYesButton.addEventListener('click', () => {
+        introPopup.classList.add('hidden');
+        doorLayer.classList.add('enabled');
+      });
+
       doors.forEach((door, index) => {
+        door.addEventListener('mouseenter', () => {
+          setDoorHoverState(door);
+        });
+
         door.addEventListener('click', () => {
           door.classList.add('open');
           const popup = document.getElementById(`popup${index + 1}`);
@@ -127,7 +250,10 @@
         });
       });
 
-      // 팝업 닫기 → 퍼즐 팝업 열기
+      doorLayer.addEventListener('mouseleave', () => {
+        resetDoorHoverState();
+      });
+
       popupCloses.forEach(area => {
         area.addEventListener('click', () => {
           const num = area.dataset.popup;
@@ -139,18 +265,16 @@
         });
       });
 
-      // 퍼즐 팝업 OK 클릭 → window4로 전환
       okayButtons.forEach(area => {
         area.addEventListener('click', (e) => {
           e.stopPropagation();
           const num = area.dataset.pz;
           console.log(`퍼즐 조각 ${num} 획득! → window4로 전환`);
 
-          // ✅ 부모의 함수 호출만 (자기 자신 제거 X)
           if (window.parent && window.parent.showWindow4) {
             window.parent.showWindow4();
           } else {
-            window.location.href = "window4.html"; // 단독 실행용
+            window.location.href = "window4.html";
           }
         });
       });
