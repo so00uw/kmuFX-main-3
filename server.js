@@ -6,14 +6,14 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 
 app.options("/print", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5501");
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   return res.sendStatus(200);
 });
 
 app.post("/print", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5501");
+  res.setHeader("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   
   const { image } = req.body;
